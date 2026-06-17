@@ -51,3 +51,12 @@ Authenticated requests use:
 ```http
 Authorization: Bearer <token>
 ```
+
+## Map and Location Data Policy
+
+CheckHouse backend uses:
+
+- Nominatim/OpenStreetMap for forward and reverse geocoding.
+- OpenStreetMap Overpass API for nearby amenities and POI signals.
+
+Do not use Google Maps APIs in this backend.

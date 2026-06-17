@@ -1,5 +1,7 @@
 import { PropertyLocation } from "@/lib/types";
 
+const NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org";
+
 export async function resolveLocation(input: { address?: string; latitude?: number; longitude?: number; listingUrl?: string }): Promise<PropertyLocation> {
   if (typeof input.latitude === "number" && typeof input.longitude === "number") {
     return {
@@ -12,7 +14,7 @@ export async function resolveLocation(input: { address?: string; latitude?: numb
 
   const address = input.address?.trim() || "Sample property";
   try {
-    const url = new URL("https://nominatim.openstreetmap.org/search");
+    const url = new URL("/search", NOMINATIM_BASE_URL);
     url.searchParams.set("format", "jsonv2");
     url.searchParams.set("limit", "1");
     url.searchParams.set("q", address);
@@ -45,7 +47,7 @@ export async function resolveLocation(input: { address?: string; latitude?: numb
 
 async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
   try {
-    const url = new URL("https://nominatim.openstreetmap.org/reverse");
+    const url = new URL("/reverse", NOMINATIM_BASE_URL);
     url.searchParams.set("format", "jsonv2");
     url.searchParams.set("lat", String(latitude));
     url.searchParams.set("lon", String(longitude));

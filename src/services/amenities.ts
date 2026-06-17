@@ -18,6 +18,8 @@ const categories: AmenityCategory[] = [
   "Police Stations"
 ];
 
+// Nearby amenities are fetched from OpenStreetMap Overpass API only.
+// CheckHouse intentionally does not use Google Maps APIs for geocoding or POI data.
 export async function fetchAmenitySummaries(location: PropertyLocation): Promise<AmenitySummary[]> {
   try {
     const overpassUrl = env.overpassApiUrl;
