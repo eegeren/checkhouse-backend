@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String          @id @default(cuid())
+  email          String          @unique
+  passwordHash   String?
+  reports        Report[]
+  savedProperties SavedProperty[]
+  subscription   Subscription?
+  usage          AnalysisUsage[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Report {
+  id                  String   @id @default(cuid())
+  userId              String?
+  user                User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  address             String
+  latitude            Float
+  longitude           Float
+  overallScore        Int
+  amenityScore        Int
+  transportScore      Int
+  healthcareScore     Int      @default(0)
+  educationScore      Int      @default(0)
+  dailyNeedsScore     Int      @default(0)
+  greenAreasScore     Int      @default(0)
+  safetyScore         Int
+  noiseScore          Int
+  disasterRiskScore   Int      @default(0)
+  earthquakeRiskScore Int
+  walkabilityScore    Int      @default(0)
+  familyScore         Int      @default(0)
+  investmentScore     Int
+  rawLocationJson     Json?
+  rawScoresJson       Json?
+  rawAmenitiesJson    Json
+  rawRiskJson         Json
+  aiSummary           String
+  aiDetailsJson       Json?
+  prosJson            Json
+  consJson            Json
+  verdict             String
+  createdAt           DateTime @default(now())
+}
+
+model SavedProperty {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reportId  String?
+  address   String
+  latitude  Float
+  longitude Float
+  favorite  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Subscription {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  revenueCatUserId    String?
+  productId           String?
+  status              String   @default("inactive")
+  currentPeriodEndsAt DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+model AnalysisUsage {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ipHash    String?
+  count     Int      @default(0)
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, date])
+  @@index([ipHash, date])
+}
