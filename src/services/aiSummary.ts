@@ -1,4 +1,3 @@
-import OpenAI from "openai";
 import { env } from "@/lib/env";
 import { AISummary, CheckHouseReport, PropertyLocation, RiskInsight, ScoreSet } from "@/lib/types";
 
@@ -15,40 +14,12 @@ export async function generateAISummary(input: SummaryInput): Promise<AISummary>
     if (geminiSummary) return geminiSummary;
   }
 
-  if (env.openaiApiKey) {
-    const openAISummary = await generateWithOpenAI(input);
-    if (openAISummary) return openAISummary;
-  }
-
   return fallbackSummary(input);
-}
-
-async function generateWithOpenAI(input: SummaryInput): Promise<AISummary | null> {
-  try {
-    const client = new OpenAI({ apiKey: env.openaiApiKey });
-    const completion = await client.chat.completions.create({
-      model: "gpt-4o-mini",
-      response_format: { type: "json_object" },
-      messages: [
-        {
-          role: "system",
-          content: "You write concise property location analysis. Never claim a building is safe or will collapse. Always frame risk as location-based estimate, not engineering report. Return JSON only."
-        },
-        {
-          role: "user",
-          content: JSON.stringify(input)
-        }
-      ]
-    });
-    return normalizeAISummary(input, completion.choices[0]?.message.content);
-  } catch {
-    return null;
-  }
 }
 
 async function generateWithGemini(input: SummaryInput): Promise<AISummary | null> {
   try {
-    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.geminiModel}:generateContent?key=${env.geminiApiKey}`, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${env.geminiApiKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

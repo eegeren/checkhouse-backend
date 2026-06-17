@@ -20,6 +20,10 @@ export function forbidden(message: string) {
   return NextResponse.json({ error: { code: "forbidden", message } }, { status: 403 });
 }
 
+export function notFound(message: string) {
+  return NextResponse.json({ error: { code: "not_found", message } }, { status: 404 });
+}
+
 export function serverError(message = "Unexpected server error.") {
   return NextResponse.json({ error: { code: "server_error", message } }, { status: 500 });
 }

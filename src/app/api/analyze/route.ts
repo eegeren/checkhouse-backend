@@ -1,10 +1,11 @@
 import { z } from "zod";
-import { badRequest, forbidden, ok, serverError } from "@/lib/http";
+import { badRequest, forbidden, notFound, ok, serverError } from "@/lib/http";
 import { reportDisclaimerPayload } from "@/services/aiSummary";
 import { getAuthUser } from "@/services/auth";
 import { buildReport } from "@/services/reportBuilder";
 import { saveReport } from "@/services/reportRepository";
 import { checkAndRecordUsage } from "@/services/usage";
+import { AddressNotFoundError } from "@/services/geocoding";
 
 export const runtime = "nodejs";
 
@@ -31,6 +32,9 @@ export async function POST(request: Request) {
     const savedReport = await saveReport(report, user);
     return ok({ ...reportDisclaimerPayload(savedReport), usage });
   } catch (error) {
+    if (error instanceof AddressNotFoundError) {
+      return notFound(error.message);
+    }
     return serverError(error instanceof Error ? error.message : "Analysis failed");
   }
 }

@@ -1,8 +1,9 @@
 import { createHash } from "crypto";
 import { prisma } from "@/lib/prisma";
-import { env, isDatabaseConfigured } from "@/lib/env";
+import { isDatabaseConfigured } from "@/lib/env";
 import { AuthUser } from "./auth";
 
+const FREE_DAILY_LIMIT = 3;
 const globalForUsage = globalThis as unknown as { checkHouseUsage?: Map<string, number> };
 const memoryUsage = globalForUsage.checkHouseUsage ?? new Map<string, number>();
 globalForUsage.checkHouseUsage = memoryUsage;
@@ -21,7 +22,7 @@ export async function checkAndRecordUsage(request: Request, user: AuthUser | nul
 
   const key = user?.id ?? ipHash(request);
   const date = startOfToday();
-  const limit = env.freeDailyLimit;
+  const limit = FREE_DAILY_LIMIT;
 
   if (!isDatabaseConfigured()) {
     const memoryKey = `${key}:${date.toISOString()}`;

@@ -1,6 +1,14 @@
 import { PropertyLocation } from "@/lib/types";
 
 const NOMINATIM_BASE_URL = "https://nominatim.openstreetmap.org";
+const NOMINATIM_USER_AGENT = "CheckHouse/1.0";
+
+export class AddressNotFoundError extends Error {
+  constructor(message = "Address not found.") {
+    super(message);
+    this.name = "AddressNotFoundError";
+  }
+}
 
 export async function resolveLocation(input: { address?: string; latitude?: number; longitude?: number; listingUrl?: string }): Promise<PropertyLocation> {
   if (typeof input.latitude === "number" && typeof input.longitude === "number") {
@@ -19,9 +27,10 @@ export async function resolveLocation(input: { address?: string; latitude?: numb
     url.searchParams.set("limit", "1");
     url.searchParams.set("q", address);
     const response = await fetch(url, {
-      headers: { "user-agent": "CheckHouse/0.1 support@checkhouse.app" },
+      headers: { "user-agent": NOMINATIM_USER_AGENT },
       signal: AbortSignal.timeout(7000)
     });
+    if (!response.ok) throw new AddressNotFoundError();
     const results = (await response.json()) as Array<{ lat: string; lon: string; display_name: string }>;
     const first = results[0];
     if (first) {
@@ -32,17 +41,12 @@ export async function resolveLocation(input: { address?: string; latitude?: numb
         listingUrl: input.listingUrl
       };
     }
-  } catch {
-    // Fallback below keeps the API usable without network/geocoder availability.
+  } catch (error) {
+    if (error instanceof AddressNotFoundError) throw error;
+    throw new AddressNotFoundError();
   }
 
-  const seed = Math.abs(hash(address));
-  return {
-    address,
-    latitude: 41.0082 + (seed % 800) / 10000 - 0.04,
-    longitude: 28.9784 + (Math.floor(seed / 10) % 800) / 10000 - 0.04,
-    listingUrl: input.listingUrl
-  };
+  throw new AddressNotFoundError();
 }
 
 async function reverseGeocode(latitude: number, longitude: number): Promise<string> {
@@ -52,13 +56,14 @@ async function reverseGeocode(latitude: number, longitude: number): Promise<stri
     url.searchParams.set("lat", String(latitude));
     url.searchParams.set("lon", String(longitude));
     const response = await fetch(url, {
-      headers: { "user-agent": "CheckHouse/0.1 support@checkhouse.app" },
+      headers: { "user-agent": NOMINATIM_USER_AGENT },
       signal: AbortSignal.timeout(7000)
     });
+    if (!response.ok) throw new AddressNotFoundError("Reverse geocoding failed.");
     const result = (await response.json()) as { display_name?: string };
     return result.display_name ?? `Pinned location ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
   } catch {
-    return `Pinned location ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`;
+    throw new AddressNotFoundError("Reverse geocoding failed.");
   }
 }
 

@@ -1,6 +1,7 @@
 import { AmenityCategory, AmenitySummary, PropertyLocation } from "@/lib/types";
-import { env } from "@/lib/env";
 import { hash } from "./geocoding";
+
+const OVERPASS_API_URL = "https://overpass-api.de/api/interpreter";
 
 const categories: AmenityCategory[] = [
   "Supermarkets",
@@ -22,9 +23,8 @@ const categories: AmenityCategory[] = [
 // CheckHouse intentionally does not use Google Maps APIs for geocoding or POI data.
 export async function fetchAmenitySummaries(location: PropertyLocation): Promise<AmenitySummary[]> {
   try {
-    const overpassUrl = env.overpassApiUrl;
     const query = buildOverpassQuery(location.latitude, location.longitude);
-    const response = await fetch(overpassUrl, {
+    const response = await fetch(OVERPASS_API_URL, {
       method: "POST",
       body: query,
       signal: AbortSignal.timeout(12000)
@@ -64,6 +64,8 @@ function buildOverpassQuery(latitude: number, longitude: number): string {
   node(around:1000,${latitude},${longitude})["shop"];
   node(around:1000,${latitude},${longitude})["leisure"];
   node(around:1000,${latitude},${longitude})["public_transport"];
+  node(around:1000,${latitude},${longitude})["highway"="bus_stop"];
+  node(around:1000,${latitude},${longitude})["railway"="station"];
 );
 out center;`;
 }
@@ -72,6 +74,8 @@ function matchesCategory(category: AmenityCategory, tags: Record<string, string>
   const amenity = tags.amenity;
   const shop = tags.shop;
   const leisure = tags.leisure;
+  const highway = tags.highway;
+  const railway = tags.railway;
   const publicTransport = tags.public_transport;
   switch (category) {
     case "Supermarkets": return shop === "supermarket" || shop === "convenience";
@@ -81,7 +85,7 @@ function matchesCategory(category: AmenityCategory, tags: Record<string, string>
     case "Schools": return amenity === "school" || amenity === "kindergarten";
     case "Universities": return amenity === "university" || amenity === "college";
     case "Parks": return leisure === "park";
-    case "Public Transport": return Boolean(publicTransport) || amenity === "bus_station";
+    case "Public Transport": return Boolean(publicTransport) || amenity === "bus_station" || highway === "bus_stop" || railway === "station";
     case "Restaurants & Cafes": return amenity === "restaurant" || amenity === "cafe" || amenity === "bar";
     case "Banks & ATMs": return amenity === "bank" || amenity === "atm";
     case "Gyms": return leisure === "fitness_centre";

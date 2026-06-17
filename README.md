@@ -21,17 +21,12 @@ npx prisma migrate dev --name init
 ## Environment
 
 ```env
-DATABASE_URL=postgresql://checkhouse:checkhouse@localhost:5432/checkhouse?schema=public
-OPENAI_API_KEY=
+DATABASE_URL=
 GEMINI_API_KEY=
-GEMINI_MODEL=gemini-2.5-flash
-OVERPASS_API_URL=https://overpass-api.de/api/interpreter
-REVENUECAT_API_KEY=
-JWT_SECRET=replace-with-a-long-random-secret
-FREE_DAILY_LIMIT=3
+JWT_SECRET=
 ```
 
-If `DATABASE_URL` or external provider keys are missing, the backend uses safe mock/fallback behavior for local demos.
+If `GEMINI_API_KEY` is missing, CheckHouse returns mock AI summaries. Nominatim and Overpass do not require API keys.
 
 ## Routes
 
@@ -57,6 +52,18 @@ Authorization: Bearer <token>
 CheckHouse backend uses:
 
 - Nominatim/OpenStreetMap for forward and reverse geocoding.
+  Base URL: `https://nominatim.openstreetmap.org`
+  User-Agent: `CheckHouse/1.0`
 - OpenStreetMap Overpass API for nearby amenities and POI signals.
+  Base URL: `https://overpass-api.de/api/interpreter`
 
 Do not use Google Maps APIs in this backend.
+
+Main flow:
+
+1. User enters an address.
+2. Backend geocodes with Nominatim.
+3. Backend fetches nearby POIs with Overpass.
+4. Backend calculates scores.
+5. Backend generates AI summary with Gemini, or mock summary if `GEMINI_API_KEY` is missing.
+6. Backend returns a complete CheckHouse report.
