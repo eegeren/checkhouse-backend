@@ -24,6 +24,7 @@ npx prisma migrate dev --name init
 DATABASE_URL=postgresql://checkhouse:checkhouse@localhost:5432/checkhouse?schema=public
 OPENAI_API_KEY=
 GEMINI_API_KEY=
+GEMINI_MODEL=gemini-2.5-flash
 OVERPASS_API_URL=https://overpass-api.de/api/interpreter
 REVENUECAT_API_KEY=
 JWT_SECRET=replace-with-a-long-random-secret
